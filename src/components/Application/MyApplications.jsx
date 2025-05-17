@@ -201,8 +201,8 @@ const MyApplications = () => {
       try {
         const url =
           user && user.role === "Employer"
-            ? "http://localhost:4000/api/v1/application/employer/getall"
-            : "http://localhost:4000/api/v1/application/jobseeker/getall";
+            ? "https://job-application-backend-6jgg.onrender.com/api/v1/application/employer/getall"
+            : "https://job-application-backend-6jgg.onrender.com/api/v1/application/jobseeker/getall";
 
         const response = await axios.get(url, {
           withCredentials: true,
@@ -222,7 +222,7 @@ const MyApplications = () => {
 
   const deleteApplication = async (id) => {
     try {
-      const response = await axios.delete(`http://localhost:4000/api/v1/application/delete/${id}`, {
+      const response = await axios.delete(`https://job-application-backend-6jgg.onrender.com/api/v1/application/delete/${id}`, {
         withCredentials: true,
       });
       toast.success(response.data.message);
@@ -259,7 +259,7 @@ const MyApplications = () => {
     try {
       // Frontend endpoint to send email
       await axios.post(
-        "http://localhost:4000/api/v1/application/send-acceptance-email",
+        "https://job-application-backend-6jgg.onrender.com/api/v1/application/send-acceptance-email",
         {
           applicantId: selectedApplicant._id,
           applicantEmail: selectedApplicant.email,

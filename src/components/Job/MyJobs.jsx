@@ -30,7 +30,7 @@ const MyJobs = () => {
     const fetchJobs = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/job/getmyjobs",
+          "https://job-application-backend-6jgg.onrender.com/api/v1/job/getmyjobs",
           { withCredentials: true }
         );
         setMyJobs(data.myJobs);
@@ -60,7 +60,7 @@ const MyJobs = () => {
   const handleUpdateJob = async (jobId) => {
     const updatedJob = myJobs.find((job) => job._id === jobId);
     await axios
-      .put(`http://localhost:4000/api/v1/job/update/${jobId}`, updatedJob, {
+      .put(`https://job-application-backend-6jgg.onrender.com/api/v1/job/update/${jobId}`, updatedJob, {
         withCredentials: true,
       })
       .then((res) => {
@@ -80,7 +80,7 @@ const handleDeleteJob = async (jobId) => {
 
   if (confirmed) {
     try {
-      const res = await axios.delete(`http://localhost:4000/api/v1/job/delete/${jobId}`, {
+      const res = await axios.delete(`https://job-application-backend-6jgg.onrender.com/api/v1/job/delete/${jobId}`, {
         withCredentials: true,
       });
       toast.success(res.data.message);

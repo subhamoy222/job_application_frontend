@@ -19,7 +19,7 @@ const JobDetails = () => {
 // Axios sends a GET request to http://localhost:4000/api/v1/job/{id} to get the job details.
   useEffect(() => {
     axios
-      .get(`http://localhost:4000/api/v1/job/${id}`, {
+      .get(`https://job-application-backend-6jgg.onrender.com/api/v1/job/${id}`, {
         withCredentials: true,
       })
       .then((res) => {
