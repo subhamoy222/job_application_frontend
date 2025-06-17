@@ -101,6 +101,7 @@ const JobDetails = () => {
 
   useEffect(() => {
     if (!isAuthorized) {
+      toast.error("Please log in to view job details");
       navigateTo("/login");
       return;
     }
