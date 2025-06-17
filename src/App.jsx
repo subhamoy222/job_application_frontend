@@ -86,7 +86,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import { Register } from "./components/Auth/Register";
 
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
@@ -109,17 +109,28 @@ const App = () => {
           "https://job-application-backend-6jgg.onrender.com/api/v1/user/getuser",
           {
             withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json',
+            },
           }
         );
         setUser(response.data.user);
         setIsAuthorized(true);
       } catch (error) {
+        console.error("Authentication check failed:", error);
+        
+        // Only show toast for non-401 errors (401 just means not logged in)
+        if (error.response?.status !== 401) {
+          toast.error("Failed to authenticate user");
+        }
+        
         setIsAuthorized(false);
-        setUser(null); // Also clear user data on error
+        setUser(null);
       }
     };
+    
     fetchUser();
-  }, []); // Empty dependency array - run only once on mount
+  }, [setIsAuthorized, setUser]);
 
   return (
     <>
@@ -138,7 +149,16 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
-        <Toaster />
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
       </BrowserRouter>
     </>
   );
