@@ -87,12 +87,14 @@ import React, { useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast"; // Use react-hot-toast instead
 import { Context } from "../../main";
 
 const JobDetails = () => {
   const { id } = useParams();
   const [job, setJob] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigateTo = useNavigate();
 
   const { isAuthorized, user } = useContext(Context);
@@ -106,6 +108,7 @@ const JobDetails = () => {
     const fetchJobDetails = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await axios.get(
           `https://job-application-backend-6jgg.onrender.com/api/v1/job/${id}`,
           {
@@ -120,10 +123,13 @@ const JobDetails = () => {
           toast.error("Session expired. Please login again.");
           navigateTo("/login");
         } else if (error.response?.status === 404) {
+          toast.error("Job not found.");
           navigateTo("/notfound");
         } else {
-          toast.error("Failed to load job details");
-          navigateTo("/job/getall");
+          const errorMessage = error.response?.data?.message || "Failed to load job details";
+          toast.error(errorMessage);
+          setError(errorMessage);
+          // Don't navigate away on other errors, let user retry
         }
       } finally {
         setLoading(false);
@@ -147,31 +153,56 @@ const JobDetails = () => {
     );
   }
 
+  if (error) {
+    return (
+      <section className="jobDetail page">
+        <div className="container">
+          <h3>Error Loading Job</h3>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Try Again</button>
+          <Link to="/job/getall">Back to Jobs</Link>
+        </div>
+      </section>
+    );
+  }
+
+  // Check if job data exists
+  if (!job || Object.keys(job).length === 0) {
+    return (
+      <section className="jobDetail page">
+        <div className="container">
+          <h3>Job Not Found</h3>
+          <Link to="/job/getall">Back to Jobs</Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="jobDetail page">
       <div className="container">
         <h3>Job Details</h3>
         <div className="banner">
           <p>
-            Title: <span>{job.title}</span>
+            Title: <span>{job.title || 'N/A'}</span>
           </p>
           <p>
-            Category: <span>{job.category}</span>
+            Category: <span>{job.category || 'N/A'}</span>
           </p>
           <p>
-            Country: <span>{job.country}</span>
+            Country: <span>{job.country || 'N/A'}</span>
           </p>
           <p>
-            City: <span>{job.city}</span>
+            City: <span>{job.city || 'N/A'}</span>
           </p>
           <p>
-            Location: <span>{job.location}</span>
+            Location: <span>{job.location || 'N/A'}</span>
           </p>
           <p>
-            Description: <span>{job.description}</span>
+            Description: <span>{job.description || 'N/A'}</span>
           </p>
           <p>
-            Job Posted On: <span>{job.jobPostedOn}</span>
+            Job Posted On: <span>{job.jobPostedOn ? new Date(job.jobPostedOn).toLocaleDateString() : 'N/A'}</span>
           </p>
           <p>
             Salary:{" "}
@@ -179,7 +210,7 @@ const JobDetails = () => {
               <span>{job.fixedSalary}</span>
             ) : (
               <span>
-                {job.salaryFrom} - {job.salaryTo}
+                {job.salaryFrom && job.salaryTo ? `${job.salaryFrom} - ${job.salaryTo}` : 'N/A'}
               </span>
             )}
           </p>
