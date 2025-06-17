@@ -182,11 +182,10 @@ import { useNavigate } from "react-router-dom";
 import ResumeModal from "./ResumeModal";
 import { AiFillFilePdf } from 'react-icons/ai';
 
-
-
 const MyApplications = () => {
   const { user, isAuthorized } = useContext(Context);
   const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [resumeImageUrl, setResumeImageUrl] = useState("");
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -197,40 +196,59 @@ const MyApplications = () => {
   const navigateTo = useNavigate();
 
   useEffect(() => {
+    if (!isAuthorized) {
+      navigateTo("/login");
+      return;
+    }
+
     const fetchApplications = async () => {
       try {
-        const url =
-          user && user.role === "Employer"
-            ? "https://job-application-backend-6jgg.onrender.com/api/v1/application/employer/getall"
-            : "https://job-application-backend-6jgg.onrender.com/api/v1/application/jobseeker/getall";
+        setLoading(true);
+        const url = user && user.role === "Employer"
+          ? "https://job-application-backend-6jgg.onrender.com/api/v1/application/employer/getall"
+          : "https://job-application-backend-6jgg.onrender.com/api/v1/application/jobseeker/getall";
 
         const response = await axios.get(url, {
           withCredentials: true,
         });
-        setApplications(response.data.applications);
+        setApplications(response.data.applications || []);
       } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to fetch applications");
+        console.error("Error fetching applications:", error);
+        
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please login again.");
+          navigateTo("/login");
+        } else {
+          toast.error(error.response?.data?.message || "Failed to fetch applications");
+          setApplications([]);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (isAuthorized) {
-      fetchApplications();
-    } else {
-      navigateTo("/");
-    }
+    fetchApplications();
   }, [isAuthorized, navigateTo, user]);
 
   const deleteApplication = async (id) => {
     try {
-      const response = await axios.delete(`https://job-application-backend-6jgg.onrender.com/api/v1/application/delete/${id}`, {
-        withCredentials: true,
-      });
+      const response = await axios.delete(
+        `https://job-application-backend-6jgg.onrender.com/api/v1/application/delete/${id}`,
+        {
+          withCredentials: true,
+        }
+      );
       toast.success(response.data.message);
       setApplications((prevApplications) =>
         prevApplications.filter((application) => application._id !== id)
       );
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete application");
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigateTo("/login");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to delete application");
+      }
     }
   };
 
@@ -245,7 +263,6 @@ const MyApplications = () => {
 
   const openEmailModal = (applicant) => {
     setSelectedApplicant(applicant);
-    // Set default email body with applicant's name
     setEmailBody(`Dear ${applicant.name},\n\nWe are pleased to inform you that your application has been accepted. We were impressed with your qualifications and experience, and we believe you would be a valuable addition to our team.\n\nWe would like to schedule an interview with you to discuss the position further. Please let us know your availability for the coming week.\n\nBest regards,\n${user?.name || 'The Hiring Team'}`);
     setEmailModalOpen(true);
   };
@@ -257,7 +274,6 @@ const MyApplications = () => {
 
   const sendAcceptanceEmail = async () => {
     try {
-      // Frontend endpoint to send email
       await axios.post(
         "https://job-application-backend-6jgg.onrender.com/api/v1/application/send-acceptance-email",
         {
@@ -274,16 +290,34 @@ const MyApplications = () => {
       toast.success(`Acceptance email sent to ${selectedApplicant.name}`);
       closeEmailModal();
       
-      // Update application status locally
       setApplications(prevApplications => 
         prevApplications.map(app => 
           app._id === selectedApplicant._id ? {...app, status: 'accepted'} : app
         )
       );
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send acceptance email");
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigateTo("/login");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to send acceptance email");
+      }
     }
   };
+
+  if (!isAuthorized) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <section className="applications-section">
+        <div className="applications-container">
+          <h1>Loading applications...</h1>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="applications-section">
@@ -422,8 +456,7 @@ const MyApplications = () => {
   );
 };
 
-export default MyApplications;
-
+// JobSeekerCard and EmployerCard components remain the same...
 const JobSeekerCard = ({ element, deleteApplication, openModal }) => (
   <div className="application-card">
     <div className="application-card-content">
@@ -488,7 +521,6 @@ const JobSeekerCard = ({ element, deleteApplication, openModal }) => (
 );
 
 const EmployerCard = ({ element, openModal, openEmailModal }) => {
-  // Check if application has been accepted
   const isAccepted = element.status === 'accepted';
   
   return (
@@ -583,3 +615,5 @@ const EmployerCard = ({ element, openModal, openEmailModal }) => {
     </div>
   );
 };
+
+export default MyApplications;
