@@ -203,7 +203,7 @@ const JobDetails = () => {
             Description: <span>{job.description || 'N/A'}</span>
           </p>
           <p>
-            Job Posted On: <span>{job.jobPostedOn ? new Date(job.jobPostedOn).toLocaleDateString() : 'N/A'}</span>
+            Job Posted on: <span>{job.jobPostedOn ? new Date(job.jobPostedOn).toLocaleDateString() : 'N/A'}</span>
           </p>
           <p>
             Salary:{" "}
