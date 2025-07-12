@@ -170,6 +170,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
 import { FaPhone, FaUser } from "react-icons/fa";
+import api from "../../utils/axios.js";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -243,15 +244,22 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(
-        "https://job-application-backend-6jgg.onrender.com/api/v1/user/register",
-        { name, email, password, phone, role },
-        { headers: { "Content-Type": "application/json" }, withCredentials: true }
-      );
+      const { data } = await api.post("/user/register", { name, email, password, phone, role });
       toast.success(data.message);
       setIsAuthorized(true);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      if (error.response) {
+        // Server responded with error status
+        toast.error(error.response.data.message || "Registration failed");
+      } else if (error.request) {
+        // Network error (CORS, no internet, etc.)
+        toast.error("Network error. Please check your connection and try again.");
+        console.error("Network error:", error.message);
+      } else {
+        // Other errors
+        toast.error("An unexpected error occurred. Please try again.");
+        console.error("Registration error:", error.message);
+      }
     }
   };
 

@@ -87,7 +87,7 @@ import Login from "./components/Auth/Login";
 import { Register } from "./components/Auth/Register";
 
 import toast, { Toaster } from "react-hot-toast";
-import axios from "axios";
+import api from "./utils/axios.js";
 import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
 import Home from "./components/Home/Home";
@@ -105,23 +105,25 @@ const App = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(
-          "https://job-application-backend-6jgg.onrender.com/api/v1/user/getuser",
-          {
-            withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        const response = await api.get("/user/getuser");
         setUser(response.data.user);
         setIsAuthorized(true);
       } catch (error) {
         console.error("Authentication check failed:", error);
         
-        // Only show toast for non-401 errors (401 just means not logged in)
-        if (error.response?.status !== 401) {
-          toast.error("Failed to authenticate user");
+        // Handle different types of errors
+        if (error.response) {
+          // Server responded with error status
+          if (error.response.status !== 401) {
+            toast.error("Authentication failed. Please login again.");
+          }
+        } else if (error.request) {
+          // Network error (CORS, no internet, etc.)
+          console.error("Network error during authentication:", error.message);
+          // Don't show toast for network errors during initial load
+        } else {
+          // Other errors
+          console.error("Authentication error:", error.message);
         }
         
         setIsAuthorized(false);

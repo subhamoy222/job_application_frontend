@@ -127,7 +127,7 @@
 // export default Application;
 
 // Application.jsx - Fixed version
-import axios from "axios";
+import api from "../../utils/axios.js";
 import React, { useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
@@ -148,10 +148,12 @@ const Application = () => {
   // Check authentication on component mount
   React.useEffect(() => {
     if (!isAuthorized) {
+      toast.error("Please login to submit application");
       navigateTo("/login");
       return;
     }
     if (user && user.role === "Employer") {
+      toast.error("Employers cannot submit job applications");
       navigateTo("/");
       return;
     }
@@ -168,7 +170,7 @@ const Application = () => {
     e.preventDefault();
     
     // Check authentication before submitting
-    if (!isAuthorized) {
+    if (!isAuthorized || !user) {
       toast.error("Please login to submit application");
       navigateTo("/login");
       return;
@@ -189,16 +191,11 @@ const Application = () => {
     formData.append("jobId", id);
 
     try {
-      const { data } = await axios.post(
-        "https://job-application-backend-6jgg.onrender.com/api/v1/application/post",
-        formData,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const { data } = await api.post("/application/post", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       setName("");
       setEmail("");
       setCoverLetter("");
@@ -212,12 +209,15 @@ const Application = () => {
       
       // Handle specific error cases
       if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.");
+        toast.error("Please login to submit application. Session may have expired.");
         navigateTo("/login");
       } else if (error.response?.status === 403) {
         toast.error("You don't have permission to perform this action.");
+      } else if (error.request) {
+        // Network error
+        toast.error("Network error. Please check your connection and try again.");
       } else {
-        toast.error(error.response?.data?.message || "An error occurred");
+        toast.error(error.response?.data?.message || "An error occurred while submitting application");
       }
     }
   };

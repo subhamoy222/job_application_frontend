@@ -85,7 +85,7 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/axios.js";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
@@ -100,30 +100,16 @@ const JobDetails = () => {
   const { isAuthorized, user } = useContext(Context);
 
   useEffect(() => {
-    if (!isAuthorized) {
-      toast.error("Please log in to view job details");
-      navigateTo("/login");
-      return;
-    }
-
     const fetchJobDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(
-          `https://job-application-backend-6jgg.onrender.com/api/v1/job/${id}`,
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await api.get(`/job/${id}`);
         setJob(response.data.job);
       } catch (error) {
         console.error("Error fetching job details:", error);
         
-        if (error.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
-          navigateTo("/login");
-        } else if (error.response?.status === 404) {
+        if (error.response?.status === 404) {
           toast.error("Job not found.");
           navigateTo("/notfound");
         } else {
@@ -138,11 +124,9 @@ const JobDetails = () => {
     };
 
     fetchJobDetails();
-  }, [id, isAuthorized, navigateTo]);
+  }, [id, navigateTo]);
 
-  if (!isAuthorized) {
-    return null;
-  }
+  // Remove authentication check since job details are now public
 
   if (loading) {
     return (

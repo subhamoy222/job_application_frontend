@@ -176,7 +176,7 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../../main";
-import axios from "axios";
+import api from "../../utils/axios.js";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import ResumeModal from "./ResumeModal";
@@ -196,7 +196,8 @@ const MyApplications = () => {
   const navigateTo = useNavigate();
 
   useEffect(() => {
-    if (!isAuthorized) {
+    if (!isAuthorized || !user) {
+      toast.error("Please login to view your applications");
       navigateTo("/login");
       return;
     }
@@ -205,19 +206,21 @@ const MyApplications = () => {
       try {
         setLoading(true);
         const url = user && user.role === "Employer"
-          ? "https://job-application-backend-6jgg.onrender.com/api/v1/application/employer/getall"
-          : "https://job-application-backend-6jgg.onrender.com/api/v1/application/jobseeker/getall";
+          ? "/application/employer/getall"
+          : "/application/jobseeker/getall";
 
-        const response = await axios.get(url, {
-          withCredentials: true,
-        });
+        const response = await api.get(url);
         setApplications(response.data.applications || []);
       } catch (error) {
         console.error("Error fetching applications:", error);
         
         if (error.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
+          toast.error("Please login to view your applications. Session may have expired.");
           navigateTo("/login");
+        } else if (error.request) {
+          // Network error
+          toast.error("Network error. Please check your connection and try again.");
+          setApplications([]);
         } else {
           toast.error(error.response?.data?.message || "Failed to fetch applications");
           setApplications([]);
@@ -232,20 +235,18 @@ const MyApplications = () => {
 
   const deleteApplication = async (id) => {
     try {
-      const response = await axios.delete(
-        `https://job-application-backend-6jgg.onrender.com/api/v1/application/delete/${id}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await api.delete(`/application/delete/${id}`);
       toast.success(response.data.message);
       setApplications((prevApplications) =>
         prevApplications.filter((application) => application._id !== id)
       );
     } catch (error) {
       if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.");
+        toast.error("Please login to delete applications. Session may have expired.");
         navigateTo("/login");
+      } else if (error.request) {
+        // Network error
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         toast.error(error.response?.data?.message || "Failed to delete application");
       }
@@ -274,19 +275,13 @@ const MyApplications = () => {
 
   const sendAcceptanceEmail = async () => {
     try {
-      await axios.post(
-        "https://job-application-backend-6jgg.onrender.com/api/v1/application/send-acceptance-email",
-        {
-          applicantId: selectedApplicant._id,
-          applicantEmail: selectedApplicant.email,
-          applicantName: selectedApplicant.name,
-          subject: emailSubject,
-          body: emailBody
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      await api.post("/application/send-acceptance-email", {
+        applicantId: selectedApplicant._id,
+        applicantEmail: selectedApplicant.email,
+        applicantName: selectedApplicant.name,
+        subject: emailSubject,
+        body: emailBody
+      });
       toast.success(`Acceptance email sent to ${selectedApplicant.name}`);
       closeEmailModal();
       
@@ -297,8 +292,11 @@ const MyApplications = () => {
       );
     } catch (error) {
       if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.");
+        toast.error("Please login to send emails. Session may have expired.");
         navigateTo("/login");
+      } else if (error.request) {
+        // Network error
+        toast.error("Network error. Please check your connection and try again.");
       } else {
         toast.error(error.response?.data?.message || "Failed to send acceptance email");
       }

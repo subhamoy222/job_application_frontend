@@ -6,6 +6,7 @@ import { FaRegUser } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
+import api from "../../utils/axios.js";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,23 +18,25 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(
-        "https://job-application-backend-6jgg.onrender.com/api/v1/user/login",
-        { email, password, role },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
+      const { data } = await api.post("/user/login", { email, password, role });
       toast.success(data.message);
       setEmail("");
       setPassword("");
       setRole("");
       setIsAuthorized(true);
     } catch (error) {
-      toast.error(error.response.data.message);
+      if (error.response) {
+        // Server responded with error status
+        toast.error(error.response.data.message || "Login failed");
+      } else if (error.request) {
+        // Network error (CORS, no internet, etc.)
+        toast.error("Network error. Please check your connection and try again.");
+        console.error("Network error:", error.message);
+      } else {
+        // Other errors
+        toast.error("An unexpected error occurred. Please try again.");
+        console.error("Login error:", error.message);
+      }
     }
   };
 
