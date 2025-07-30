@@ -74,11 +74,11 @@ const Login = () => {
             {/* <img src="/JobZeelogo.png" alt="logo" /> */}
             <h3>Login to your account</h3>
           </div>
-          <form>
+          <form onSubmit={handleLogin}>
             <div className="inputTag">
               <label>Login As</label>
               <div>
-                <select value={role} onChange={(e) => setRole(e.target.value)}>
+                <select value={role} onChange={(e) => setRole(e.target.value)} required>
                   <option value="">Select Role</option>
                   <option value="Employer">Employer</option>
                   <option value="Job Seeker">Job Seeker</option>
@@ -94,6 +94,7 @@ const Login = () => {
                   placeholder="abc@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
                 <MdOutlineMailOutline />
               </div>
@@ -106,11 +107,12 @@ const Login = () => {
                   placeholder="Your Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <RiLock2Fill />
               </div>
             </div>
-            <button type="submit" onClick={handleLogin}>
+            <button type="submit">
               Login
             </button>
             <Link to={"/register"}>Register Now</Link>
