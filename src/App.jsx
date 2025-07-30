@@ -98,6 +98,7 @@ import MyApplications from "./components/Application/MyApplications";
 import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
+import AuthStatus from "./components/Auth/AuthStatus";
 
 const App = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
@@ -114,13 +115,16 @@ const App = () => {
         // Handle different types of errors
         if (error.response) {
           // Server responded with error status
-          if (error.response.status !== 401) {
-            toast.error("Authentication failed. Please login again.");
+          if (error.response.status === 401) {
+            // 401 is expected when not logged in - don't show error
+            console.log("User not authenticated (expected if not logged in)");
+          } else {
+            // Other server errors
+            console.error("Server error during authentication:", error.response.status);
           }
         } else if (error.request) {
           // Network error (CORS, no internet, etc.)
           console.error("Network error during authentication:", error.message);
-          // Don't show toast for network errors during initial load
         } else {
           // Other errors
           console.error("Authentication error:", error.message);
@@ -148,6 +152,7 @@ const App = () => {
           <Route path="/applications/me" element={<MyApplications />} />
           <Route path="/job/post" element={<PostJob />} />
           <Route path="/job/me" element={<MyJobs />} />
+          <Route path="/debug" element={<AuthStatus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />

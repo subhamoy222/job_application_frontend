@@ -17,14 +17,36 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!email || !password || !role) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    console.log("Attempting login with:", { email, role });
+    
     try {
       const { data } = await api.post("/user/login", { email, password, role });
+      console.log("Login successful:", data);
       toast.success(data.message);
       setEmail("");
       setPassword("");
       setRole("");
       setIsAuthorized(true);
+      
+      // Test authentication immediately after login
+      setTimeout(async () => {
+        try {
+          const userResponse = await api.get("/user/getuser");
+          console.log("Authentication test successful:", userResponse.data);
+        } catch (error) {
+          console.error("Authentication test failed:", error.response?.status);
+        }
+      }, 1000);
+      
     } catch (error) {
+      console.error("Login error:", error);
       if (error.response) {
         // Server responded with error status
         toast.error(error.response.data.message || "Login failed");
